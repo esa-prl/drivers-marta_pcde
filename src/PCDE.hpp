@@ -2,6 +2,13 @@
  * Author: Maximilian Ehrhardt
  * Mail: maximilian.ehrhardt@essa.int
  * Date of Creation: April 2019
+ *
+ * Description:
+ * Driver for the Power Distribution and Control Electronics (PCDE) of the MaRTA rover.
+ * Communication is based on a serial connection to send request messages for:
+ * - Battery status
+ * - Voltage and current levels of different channels
+ * - Motor Control Subsystem (MCS) status
  */
 
 #ifndef _PCDE_HPP_
@@ -12,20 +19,31 @@
 
 /** Definition of possible commands for the PCDE **/
 #include <pcde/Command.hpp>
+#include <pcde/SerialPort.hpp>
 
 #include <string>
 
 namespace pcde{
+    struct serialConfig
+    {
+        std::string port="";
+        int baudrate=19200;
+        int write_timeout_ms=0;
+        int read_timeout_ms=0;
+
+    };
 
     class PCDE{
         public:
-            PCDE();
-            ~PCDE();
+            PCDE(void);
+            ~PCDE(void);
 
-            // void setup(std::string const& uri);
-            // void read();
-            // void close();
-
+            /**
+             * @brief Sets the configuration of the serial communication and starts it
+             *
+             * @param config Struct containing the config values
+             */
+            void setupSerial(const serialConfig config);
 
             /**
              * @brief Reads the requested voltage current measurement of the PCDE
@@ -34,45 +52,53 @@ namespace pcde{
              * @param voltage Value given in Volts
              * @param current VAlue given in Ampere
              */
-            int getVA(const VA_Request::CHANNEL channel, float& voltage, float& current);
+            void getVA(const VA_Request::CHANNEL channel, float& voltage, float& current);
 
             /**
              * @brief Get the Status of the MCS
              *
              * @param status True when MCS is turned on, false if turned off
              */
-            int getMCSStatus(bool& status);
+            void getMCSStatus(bool& status);
 
             /**
              * @brief Set the status of the MCS
              *
              * @param status Send True to turn On and false to turn Off
              */
-            int setMCSStatus(const bool status);
+            void setMCSStatus(const bool status);
 
             /**
              * @brief Get the percentage of the battery, or check whether one is present.
              *
              * @param percentage Charge of battery in %, returns -1 if no battery is connected
              */
-            int getBatteryPercentage(int& percentage);
+            void getBatteryPercentage(int& percentage);
 
 
 
-            int sendCommand(CommandBase command);
 
         private:
+            SerialPort m_serialPort;
 
             /**
-             * @brief COM function to interpret packages
+             * @brief Extracts the voltage and current value from the serial message
              *
-             * @param buffer
-             * @param buffer_size
-             * @return int
+             * @param message Serial message
+             * @param message_length Length of the serial message
+             * @param voltage Returned voltage value
+             * @param current Returned current value
              */
+            void extractVA(const uint8_t* message, const int message_length, float& voltage, float& current);
 
-            uint8_t* strtoui8t(std::string input);
-            float ui8tof(uint8_t *input);
+            /**
+             * @brief Extracts the battery percentage value from the serial message
+             *
+             * @param message Serial message
+             * @param message_length Length of the serial message
+             * @param percentage Returned percentage value
+             */
+            void extractPercentage(const uint8_t* message, const int message_length, float& percentage);
 
     };
 

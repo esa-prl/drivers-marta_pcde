@@ -11,14 +11,13 @@
 #define _COMMAND_HPP
 
 #include <string>
+#include <string.h>
 
 namespace pcde
 {
 
 class CommandBase
 {
-  private:
-  protected:
   public:
     CommandBase(int request_msg_length, int max_response_msg_length);
 
@@ -29,6 +28,8 @@ class CommandBase
 
     // Received serial msg
     uint8_t *m_response_msg;
+    // Actual length of serial response msg
+    int m_response_msg_length;
     // Max Length of serial response msg
     int m_max_response_msg_length;
 };
@@ -76,5 +77,10 @@ class Battery_Get_Status_Request : public CommandBase
   public:
     Battery_Get_Status_Request();
 };
+
+uint8_t* strtoui8t(std::string input);
+
+float ui8tof(uint8_t *input);
+
 } // namespace pcde
 #endif

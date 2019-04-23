@@ -2,6 +2,13 @@
  * Author: Maximilian Ehrhardt
  * Mail: maximilian.ehrhardt@essa.int
  * Date of Creation: April 2019
+ *
+ * Description:
+ * Driver for the Power Distribution and Control Electronics (PCDE) of the MaRTA rover.
+ * Communication is based on a serial connection to send request messages for:
+ * - Battery status
+ * - Voltage and current levels of different channels
+ * - Motor Control Subsystem (MCS) status
  */
 
 /** PCDE Library header **/
@@ -13,76 +20,143 @@
 using namespace pcde;
 
 PCDE::PCDE()
+    : m_serialPort()
 {
 }
 
 PCDE::~PCDE()
 {
-    if (isValid())
+    if(m_serialPort.isRunning())
     {
-        close();
+        m_serialPort.closePort();
     }
 }
 
-int PCDE::getVA(VA_Request::CHANNEL channel, float &voltage, float &current)
+void PCDE::setupSerial(const serialConfig config)
+{
+    if(m_serialPort.isRunning())
+    {
+        m_serialPort.closePort();
+    }
+
+    m_serialPort.setBaudrate(config.baudrate);
+    m_serialPort.setWriteTimeout(config.write_timeout_ms);
+    m_serialPort.setReadTimeout(config.read_timeout_ms);
+
+    m_serialPort.openPort(config.port);
+}
+
+void PCDE::getVA(VA_Request::CHANNEL channel, float &voltage, float &current)
 {
     VA_Request va_request(channel);
 
-    sendCommand(va_request);
+    m_serialPort.sendCommand(va_request);
 
-    // Check the response
-    if (false)
-    {
-        throw std::runtime_error("Invalid response to VA request!");
-    }
+    extractVA(va_request.m_response_msg, va_request.m_response_msg_length, voltage, current);
 
-    return 0;
+    return;
 }
 
-int PCDE::getMCSStatus(bool &status)
+void PCDE::extractVA(const uint8_t* message, const int message_length, float& voltage, float& current)
+{
+    // Message example: 0.16A0029.85V00
+    // From Specification of PCDE voltage and current have 2 decimal places
+    // With a point as decimal delimiter, 6 characters would be sufficient
+    // for values up to 999.99 A/V
+    uint8_t vol_msg[6];
+    uint8_t cur_msg[6];
+
+    int value_delimiter_index;
+
+    bool currentValid=false;
+
+    for(int i=0; i<message_length; i++)
+    {
+        if(message[i]=='A')
+        {
+            // Avoid writing to wrong memory
+            if (i>6)
+            {
+                throw std::runtime_error("Invalid response to VA request!");
+            }
+            // Extract current value without unit char
+            std::copy(message, message+i-1, cur_msg);
+            value_delimiter_index=i;
+
+            currentValid=true;
+        }
+        if(message[i]=='V')
+        {
+            //Current is expected to be read first
+            if (!currentValid)
+                throw std::runtime_error("Invalid response to VA request!");
+
+            // Be sure voltage message is not longer than 6 characters
+            int vol_message_begin=value_delimiter_index+1;
+            int length = i-vol_message_begin;
+
+            // Minimum of leading digit, decimal point, 2 decimal digits and unit char
+            if (length<5)
+                throw std::runtime_error("Invalid response to VA request!");
+
+            if(length>6)
+                vol_message_begin=vol_message_begin+(length-6);
+
+            // Extract voltage value without unit char
+            std::copy(message+vol_message_begin, message+i-1, vol_msg);
+            break;
+        }
+    }
+
+    // Convert the messages to float
+    current=ui8tof(cur_msg);
+    voltage=ui8tof(vol_msg);
+
+}
+
+void PCDE::getMCSStatus(bool &status)
 {
     MCS_Get_Status_Request mcs_status_request;
 
-    sendCommand(mcs_status_request);
+    m_serialPort.sendCommand(mcs_status_request);
 
     if(mcs_status_request.m_response_msg[0]=='O' && mcs_status_request.m_response_msg[1]=='N')
     {
         status = true;
-        return 0;
+        return;
     }else if(mcs_status_request.m_response_msg[0]=='O' && mcs_status_request.m_response_msg[1]=='F' && mcs_status_request.m_response_msg[2]=='F')
     {
         status = false;
-        return 0;
+        return;
     }else
     {
         throw std::runtime_error("Invalid response to MCS status request!");
-        return -1;
     }
 }
 
-int PCDE::setMCSStatus(const bool status)
+void PCDE::setMCSStatus(const bool status)
 {
     MCS_Set_Status_Request mcs_set_status_request(status);
 
-    sendCommand(mcs_set_status_request);
+    m_serialPort.sendCommand(mcs_set_status_request);
 
-    return 0;
+    return;
 }
 
-int PCDE::getBatteryPercentage(int &percentage)
+void PCDE::getBatteryPercentage(int &percentage)
 {
     Battery_Get_Status_Request battery_status_request;
 
     // Try send command and catch TimeOut error
     try
     {
-        sendCommand(battery_status_request);
+        m_serialPort.sendCommand(battery_status_request);
     }
     catch (iodrivers_base::TimeoutError e)
     {
         // This behavior is expected due to no response, if no battery is connected
         percentage = -1;
-        return 0;
+        return;
     }
 
     percentage = ui8tof(battery_status_request.m_response_msg);
@@ -94,37 +168,25 @@ int PCDE::getBatteryPercentage(int &percentage)
     //     return -1;
     // }
 
-    return 0;
+    return;
 }
 
-int PCDE::sendCommand(CommandBase command)
+void PCDE::extractPercentage(const uint8_t* message, const int message_length, float& percentage)
 {
-    uint8_t *request_msg = strtoui8t(command.m_request_msg);
-    uint8_t response_msg[command.m_max_response_msg_length];
+    uint8_t perc_msg[3];
 
-    // Send request, errors are handled by underlying code
-    writePacket(request_msg, sizeof(request_msg) / sizeof(request_msg[0]) - 1);
+    for(int i = 0; i < message_length; i++)
+    {
+        if (message[i]=='%')
+        {
+            if (i>4)
+                std::runtime_error("Invalid response to battery status request!");
 
-    // Read response, errors are handled by underlying
-    readPacket(response_msg, sizeof(response_msg));
+            std::copy(message, message+i-1, perc_msg);
+            break;
+        }
+    }
 
-    command.m_response_msg = response_msg;
+    percentage = ui8tof(perc_msg);
 
-    return 0;
-}
-
-
-
-uint8_t* PCDE::strtoui8t(std::string input)
-{
-    uint8_t *output;
-    output = new uint8_t[input.length() + 1];
-    memcpy(output, input.c_str(), input.length() + 1);
-    return output;
-}
-
-float PCDE::ui8tof(uint8_t *input) {
-    std::string s;
-    s.assign(input, input + sizeof(input));
-    return std::stof(s);
 }

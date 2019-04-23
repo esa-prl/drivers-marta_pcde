@@ -44,4 +44,19 @@ MCS_Set_Status_Request::MCS_Set_Status_Request(const bool status): CommandBase(2
 Battery_Get_Status_Request::Battery_Get_Status_Request(): CommandBase(2,6)
 {
     m_request_msg = "Bt";
+} 
+
+uint8_t* pcde::strtoui8t(std::string input)
+{
+    uint8_t *output;
+    output = new uint8_t[input.length() + 1];
+    memcpy(output, input.c_str(), input.length() + 1);
+    return output;
+}
+
+float pcde::ui8tof(uint8_t *input)
+{
+    std::string s;
+    s.assign(input, input + sizeof(input));
+    return std::stof(s);
 }
