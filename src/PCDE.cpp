@@ -32,7 +32,7 @@ PCDE::~PCDE()
     }
 }
 
-void PCDE::setupSerial(const serialConfig config)
+void PCDE::setupSerial(const SerialConfig config)
 {
     if(m_serialPort.isRunning())
     {

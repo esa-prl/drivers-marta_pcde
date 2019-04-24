@@ -24,7 +24,7 @@
 #include <string>
 
 namespace pcde{
-    struct serialConfig
+    struct SerialConfig
     {
         std::string port="";
         int baudrate=19200;
@@ -43,7 +43,7 @@ namespace pcde{
              *
              * @param config Struct containing the config values
              */
-            void setupSerial(const serialConfig config);
+            void setupSerial(const SerialConfig config);
 
             /**
              * @brief Reads the requested voltage current measurement of the PCDE

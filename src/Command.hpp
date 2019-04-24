@@ -19,12 +19,10 @@ namespace pcde
 class CommandBase
 {
   public:
-    CommandBase(int request_msg_length, int max_response_msg_length);
+    CommandBase();
 
     // Serial Msg to be sent
     std::string m_request_msg;
-    // Length of the current serial request message
-    int m_request_msg_length;
 
     // Received serial msg
     uint8_t *m_response_msg;
