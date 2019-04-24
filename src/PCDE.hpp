@@ -22,6 +22,8 @@
 #include <pcde/SerialPort.hpp>
 
 #include <string>
+// Used for smart pointers
+#include <memory>
 
 namespace pcde{
     struct SerialConfig
@@ -75,12 +77,9 @@ namespace pcde{
              */
             void getBatteryPercentage(int& percentage);
 
-
-
-
         private:
-            SerialPort m_serialPort;
-
+            std::unique_ptr<SerialPort> m_serialPort;
+            
             /**
              * @brief Extracts the voltage and current value from the serial message
              *

@@ -19,6 +19,14 @@ SerialPort::SerialPort(int max_packet_size)
     }
 }
 
+SerialPort::~SerialPort()
+{
+    if(isRunning())
+    {
+        closePort();
+    }
+}
+
 void SerialPort::setBaudrate(const int baudrate)
 {
     if(m_isRunning)

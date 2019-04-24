@@ -22,9 +22,8 @@ namespace pcde{
             base::Time m_timeout = base::Time::fromMilliseconds(0);
             int m_baudrate = Driver::SERIAL_19200;
             bool m_isRunning=false;
-
+            bool m_isConfigured=false;
         public:
-
 
             /**
              * @brief Construct a new Serial Port object
@@ -33,6 +32,8 @@ namespace pcde{
              * @param timeout_ms Timeout for read and write communications. Value of 0 is non-blocking.
              */
             SerialPort(int max_packet_size=25);
+
+            ~SerialPort();
 
             /**
              * @brief Set the baudrate of the serial communication

@@ -17,40 +17,34 @@
 #include <string>
 #include <string.h>
 
+#include <memory>
+
 using namespace pcde;
 
 PCDE::PCDE()
-    : m_serialPort()
 {
 }
 
 PCDE::~PCDE()
 {
-    if(m_serialPort.isRunning())
-    {
-        m_serialPort.closePort();
-    }
 }
 
 void PCDE::setupSerial(const SerialConfig config)
 {
-    if(m_serialPort.isRunning())
-    {
-        m_serialPort.closePort();
-    }
+    m_serialPort.reset(new SerialPort());
 
-    m_serialPort.setBaudrate(config.baudrate);
-    m_serialPort.setWriteTimeout(config.write_timeout_ms);
-    m_serialPort.setReadTimeout(config.read_timeout_ms);
+    m_serialPort->setBaudrate(config.baudrate);
+    m_serialPort->setWriteTimeout(config.write_timeout_ms);
+    m_serialPort->setReadTimeout(config.read_timeout_ms);
 
-    m_serialPort.openPort(config.port);
+    m_serialPort->openPort(config.port);
 }
 
 void PCDE::getVA(VA_Request::CHANNEL channel, float &voltage, float &current)
 {
     VA_Request va_request(channel);
 
-    m_serialPort.sendCommand(va_request);
+    m_serialPort->sendCommand(va_request);
 
     extractVA(va_request.m_response_msg, va_request.m_response_msg_length, voltage, current);
 
@@ -118,7 +112,7 @@ void PCDE::getMCSStatus(bool &status)
 {
     MCS_Get_Status_Request mcs_status_request;
 
-    m_serialPort.sendCommand(mcs_status_request);
+    m_serialPort->sendCommand(mcs_status_request);
 
     if(mcs_status_request.m_response_msg[0]=='O' && mcs_status_request.m_response_msg[1]=='N')
     {
@@ -138,7 +132,7 @@ void PCDE::setMCSStatus(const bool status)
 {
     MCS_Set_Status_Request mcs_set_status_request(status);
 
-    m_serialPort.sendCommand(mcs_set_status_request);
+    m_serialPort->sendCommand(mcs_set_status_request);
 
     return;
 }
@@ -150,7 +144,7 @@ void PCDE::getBatteryPercentage(int &percentage)
     // Try send command and catch TimeOut error
     try
     {
-        m_serialPort.sendCommand(battery_status_request);
+        m_serialPort->sendCommand(battery_status_request);
     }
     catch (iodrivers_base::TimeoutError e)
     {
