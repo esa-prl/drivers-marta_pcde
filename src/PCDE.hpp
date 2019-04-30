@@ -41,11 +41,24 @@ namespace pcde{
             ~PCDE(void);
 
             /**
+             * @brief SerialPort object to manage all the serial communication
+             *
+             */
+            SerialPort m_serialPort;
+
+            /**
              * @brief Sets the configuration of the serial communication and starts it
              *
              * @param config Struct containing the config values
              */
             void setupSerial(const SerialConfig config);
+
+            /**
+             * @brief Sets the configuration of a mock serial communication and starts it
+             *
+             * @param config Struct containing the config values
+             */
+            void setupTestSerial(const SerialConfig config);
 
             /**
              * @brief Reads the requested voltage current measurement of the PCDE
@@ -78,8 +91,7 @@ namespace pcde{
             void getBatteryPercentage(int& percentage);
 
         private:
-            std::unique_ptr<SerialPort> m_serialPort;
-            
+
             /**
              * @brief Extracts the voltage and current value from the serial message
              *
