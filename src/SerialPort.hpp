@@ -17,12 +17,11 @@
 #include <pcde/Command.hpp>
 
 namespace pcde{
-    class SerialPort: private iodrivers_base::Driver{
+    class SerialPort: public iodrivers_base::Driver{
         private:
             base::Time m_timeout = base::Time::fromMilliseconds(0);
             int m_baudrate = Driver::SERIAL_19200;
             bool m_isRunning=false;
-            bool m_isConfigured=false;
         public:
 
             /**
@@ -59,9 +58,16 @@ namespace pcde{
             /**
              * @brief Opens the port for serial communication
              *
-             * @param filename Name of the port
+             * @param filename Name of the port. Can be left blank when used in testMode
+             *
              */
-            bool openPort(std::string const& filename);
+            void openPort(std::string const& filename);
+
+            /**
+             * @brief Opens a mock port to simulate serial connection for testing, which is represented by a file stream
+             *
+             */
+            void openTestPort();
 
             /**
              * @brief Returns whether port is already open

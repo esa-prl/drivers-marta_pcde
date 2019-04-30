@@ -62,26 +62,30 @@ void SerialPort::setWriteTimeout(const int timeout_ms)
     Driver::setWriteTimeout(base::Time::fromMilliseconds(timeout_ms));
 }
 
-bool SerialPort::openPort(std::string const& filename)
+void SerialPort::openPort(std::string const& filename)
 {
     if(m_isRunning)
     {
-        std::runtime_error("SerialPort: Port is already open!");
+        std::runtime_error("SerialPort: Port is already open, first close it!");
     }
-    if (Driver::openSerial(filename, m_baudrate))
+    Driver::openSerial(filename, m_baudrate);
+    m_isRunning=true;
+}
+
+void SerialPort::openTestPort()
+{
+    if(m_isRunning)
     {
-        m_isRunning=true;
-        return true;
-    }else
-    {
-        return false;
+        std::runtime_error("SerialPort: Port is already open, first close it!");
     }
+    Driver::openURI("test://");
+    m_isRunning=true;
 }
 
 void SerialPort::closePort(void)
 {
     if (isValid())
-    close();
+        close();
 }
 
 bool SerialPort::isRunning()
@@ -93,7 +97,6 @@ int SerialPort::sendCommand(CommandBase command)
 {
     uint8_t *request_msg = strtoui8t(command.m_request_msg);
     uint8_t response_msg[command.m_max_response_msg_length];
-
     // Send request, errors are handled by underlying code
     writePacket(request_msg, sizeof(request_msg) / sizeof(request_msg[0]) - 1);
 
