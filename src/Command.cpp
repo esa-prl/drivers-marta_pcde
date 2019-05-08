@@ -10,6 +10,7 @@
 #include "Command.hpp"
 
 #include <string>
+#include <iostream>
 
 using namespace pcde;
 
@@ -58,7 +59,6 @@ uint8_t *pcde::strtoui8t(std::string input)
 
 float pcde::ui8tof(uint8_t *input)
 {
-    std::string s;
-    s.assign(input, input + sizeof(input));
+    std::string s(input, input + sizeof(input) );
     return std::stof(s);
 }

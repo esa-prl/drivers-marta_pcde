@@ -14,20 +14,16 @@
 /** PCDE Library header **/
 #include "PCDE.hpp"
 
-#include <string>
 #include <string.h>
+#include <string>
 
 #include <memory>
 
 using namespace pcde;
 
-PCDE::PCDE():m_serialPort()
-{
-}
+PCDE::PCDE() : m_serialPort() {}
 
-PCDE::~PCDE()
-{
-}
+PCDE::~PCDE() {}
 
 void PCDE::setupSerial(const SerialConfig config)
 {
@@ -51,7 +47,7 @@ void PCDE::setupTestSerial(const SerialConfig config)
     m_serialPort.openTestPort();
 }
 
-void PCDE::getVA(VA_Request::CHANNEL channel, float &voltage, float &current)
+void PCDE::getVA(VA_Request::CHANNEL channel, float& voltage, float& current)
 {
     VA_Request va_request(channel);
 
@@ -59,93 +55,101 @@ void PCDE::getVA(VA_Request::CHANNEL channel, float &voltage, float &current)
     extractVA(va_request.m_response_msg, va_request.m_response_msg_length, voltage, current);
 }
 
-void PCDE::extractVA(const uint8_t* message, const int message_length, float& voltage, float& current)
+void PCDE::extractVA(const uint8_t* message,
+                     const int message_length,
+                     float& voltage,
+                     float& current)
 {
     // Message example: 0.16A0029.85V00
     // From Specification of PCDE voltage and current have 2 decimal places
     // With a point as decimal delimiter, 6 characters would be sufficient
     // for values up to 999.99 A/V
-    uint8_t vol_msg[6];
-    uint8_t cur_msg[6];
+    uint8_t* cur_msg;
+    uint8_t* vol_msg;
 
     int value_delimiter_index;
 
-    bool currentValid=false;
-    bool voltageValid=false;
+    bool currentValid = false;
+    bool voltageValid = false;
 
-    for(int i=0; i<message_length; i++)
+    for (int i = 0; i < message_length; i++)
     {
-        if(message[i]=='A')
+        if (message[i] == 'A')
         {
-            // Avoid writing to wrong memory
-            if (i>6)
+            // Current message should not be longer than this
+            if (i > 6)
             {
                 throw std::runtime_error("Invalid response to VA request!");
             }
-            // Extract current value without unit char
-            for(size_t k = 0; k < i; k++)
+            // Extract current value without current unit charecter
+            // This way of copying arrays is not the best, but it worked
+            for (size_t k = 0; k < i; k++)
             {
-                cur_msg[k]=message[k];
+                cur_msg[k] = message[k];
             }
 
-            value_delimiter_index=i;
+            value_delimiter_index = i;
 
-            currentValid=true;
+            currentValid = true;
         }
-        if(message[i]=='V')
+        if (message[i] == 'V')
         {
-            //Current is expected to be read first
-            if (!currentValid)
-                throw std::runtime_error("Invalid response to VA request!");
+            // Current is expected to be read first, so check that
+            if (!currentValid) throw std::runtime_error("Invalid response to VA request!");
 
             // Be sure voltage message is not longer than 6 characters
-            int vol_message_begin=value_delimiter_index+1;
-            int length = i-vol_message_begin;
+            int vol_message_begin = value_delimiter_index + 2;
+            int length = i - vol_message_begin;
 
             // Minimum of leading digit, decimal point, 2 decimal digits and unit char
-            if (length<5)
-                throw std::runtime_error("Invalid response to VA request!");
+            if (length < 5) throw std::runtime_error("Invalid response to VA request!");
 
-            if(length>6)
-                vol_message_begin=vol_message_begin+(length-6);
+            if (length > 6) vol_message_begin = vol_message_begin + (length - 6);
 
-            // Extract voltage value without unit char
-            // std::copy(message+vol_message_begin, message+i-1, vol_msg);
-            for(size_t k=vol_message_begin;  k < i;  k++)
+            // Extract voltage value without unit character
+            // Again a complicated way of copying, maybe there are better ways
+            for (size_t k = vol_message_begin; k < i; k++)
             {
-                vol_msg[k]=message[k];
+                vol_msg[k - vol_message_begin] = message[k];
             }
 
-            voltageValid=true;
+            voltageValid = true;
             break;
         }
     }
 
-    // Convert the messages to float
-    if (voltageValid&&currentValid) {
-        current=ui8tof(cur_msg);
-        voltage=ui8tof(vol_msg);
-    }else
+    // If current and voltage are reveived, convert them to float
+    if (voltageValid && currentValid)
     {
+        current = ui8tof(cur_msg);
+        voltage = ui8tof(vol_msg);
+    }
+    else
+    {
+        // It is expected to get always a full message, maybe an exception is not the best way here
         throw std::runtime_error("No full VA response delivered.");
     }
 }
 
-void PCDE::getMCSStatus(bool &status)
+void PCDE::getMCSStatus(bool& status)
 {
     MCS_Get_Status_Request mcs_status_request;
 
     m_serialPort.sendCommand(mcs_status_request);
 
-    if(mcs_status_request.m_response_msg[0]=='O' && mcs_status_request.m_response_msg[1]=='N')
+    if (mcs_status_request.m_response_msg[0] == 'O' && mcs_status_request.m_response_msg[1] == 'N')
     {
         status = true;
         return;
-    }else if(mcs_status_request.m_response_msg[0]=='O' && mcs_status_request.m_response_msg[1]=='F' && mcs_status_request.m_response_msg[2]=='F')
+    }
+    else if (mcs_status_request.m_response_msg[0] == 'O'
+             && mcs_status_request.m_response_msg[1] == 'F'
+             && mcs_status_request.m_response_msg[2] == 'F')
     {
         status = false;
         return;
-    }else
+    }
+    else
     {
         throw std::runtime_error("Invalid response to MCS status request!");
     }
@@ -160,7 +164,7 @@ void PCDE::setMCSStatus(const bool status)
     return;
 }
 
-void PCDE::getBatteryPercentage(int &percentage)
+void PCDE::getBatteryPercentage(int& percentage)
 {
     Battery_Get_Status_Request battery_status_request;
 
@@ -183,17 +187,15 @@ void PCDE::extractPercentage(const uint8_t* message, const int message_length, f
 {
     uint8_t perc_msg[3];
 
-    for(int i = 0; i < message_length; i++)
+    for (int i = 0; i < message_length; i++)
     {
-        if (message[i]=='%')
+        if (message[i] == '%')
         {
-            if (i>4)
-                std::runtime_error("Invalid response to battery status request!");
+            if (i > 4) std::runtime_error("Invalid response to battery status request!");
 
-            std::copy(message, message+i-1, perc_msg);
-            for(size_t k = 0; k < i; k++)
+            for (size_t k = 0; k < i; k++)
             {
-                perc_msg[k]=message[k];
+                perc_msg[k] = message[k];
             }
 
             break;

@@ -123,9 +123,16 @@ int SerialPort::sendCommand(CommandBase& command)
 
 int SerialPort::extractPacket(uint8_t const *buffer, size_t buffer_size) const
 {
-    if (buffer[buffer_size - 1] == 0)
+    /**
+     * This is a really bad hack. The messages received from PCDE
+     * are terminated by the hex value 0x00, but also the current and voltage values 
+     * are seperated by this value. To handle them as one packet, this hack with the unit character
+     * was the easiest solution. There may be a lot better ones.
+     * Best would be to implement a unique end character for messages send by the PCDE microcontroller
+     */
+    if (buffer[buffer_size - 1] == 0 && buffer[buffer_size - 2] != 'A')
     {
-        // Packet is complete when line break is sent
+        // Packet is complete when zero value is sent
         return buffer_size;
     }
     else
