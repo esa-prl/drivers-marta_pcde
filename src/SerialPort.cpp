@@ -96,7 +96,17 @@ bool SerialPort::isRunning()
 int SerialPort::sendCommand(CommandBase command)
 {
     uint8_t *request_msg = strtoui8t(command.m_request_msg);
-    uint8_t response_msg[command.m_max_response_msg_length];
+
+    /** TODO:
+     *  There should be a factory that manages all the possible commands and
+     *  is able to keep track of the maximum length of response messages.
+     *  This one then should be used to initialize the iodrivers_base.
+     *  For now this quick fix helps as long there is no command added,
+     *  that expects a response message longer than MAX_PACKET_SIZE
+     */
+    // uint8_t response_msg[command.m_max_response_msg_length];
+    uint8_t response_msg[MAX_PACKET_SIZE];
+
     // Send request, errors are handled by underlying code
     writePacket(request_msg, sizeof(request_msg) / sizeof(request_msg[0]) - 1);
 
