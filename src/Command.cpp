@@ -18,6 +18,10 @@ CommandBase::CommandBase()
 {
 }
 
+CommandBase::~CommandBase()
+{
+}
+
 VA_Request::VA_Request(VA_Request::CHANNEL channel) : CommandBase()
 {
     m_request_msg = "VA" + std::to_string(channel);
@@ -57,8 +61,20 @@ uint8_t *pcde::strtoui8t(std::string input)
     return output;
 }
 
-float pcde::ui8tof(uint8_t *input)
+float pcde::ui8tof(const uint8_t *input)
 {
     std::string s(input, input + sizeof(input) );
     return std::stof(s);
+}
+
+float pcde::ui8tof(std::vector<uint8_t> input)
+{
+    std::string s(input.begin(), input.end());
+    return std::stof(s);
+}
+
+float pcde::ui8toi(std::vector<uint8_t> input)
+{
+    std::string s(input.begin(), input.end());
+    return std::stoi(s);
 }

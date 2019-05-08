@@ -24,6 +24,7 @@
 #include <string>
 // Used for smart pointers
 #include <memory>
+#include <vector>
 
 namespace pcde{
     struct SerialConfig
@@ -100,7 +101,7 @@ namespace pcde{
              * @param voltage Returned voltage value
              * @param current Returned current value
              */
-            void extractVA(const uint8_t* message, const int message_length, float& voltage, float& current);
+            void extractVA(const std::vector<uint8_t> message, const int message_length, float& voltage, float& current);
 
             /**
              * @brief Extracts the battery percentage value from the serial message
@@ -109,7 +110,7 @@ namespace pcde{
              * @param message_length Length of the serial message
              * @param percentage Returned percentage value
              */
-            void extractPercentage(const uint8_t* message, const int message_length, float& percentage);
+            void extractPercentage(const std::vector<uint8_t> message, const int message_length, int& percentage);
 
     };
 

@@ -115,7 +115,7 @@ int SerialPort::sendCommand(CommandBase& command)
 
     for(size_t i = 0; i < command.m_response_msg_length; i++)
     {
-        command.m_response_msg[i]=response_msg[i];
+        command.m_response_msg.push_back(response_msg[i]);
     }
 
     return 0;

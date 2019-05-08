@@ -55,7 +55,7 @@ void PCDE::getVA(VA_Request::CHANNEL channel, float& voltage, float& current)
     extractVA(va_request.m_response_msg, va_request.m_response_msg_length, voltage, current);
 }
 
-void PCDE::extractVA(const uint8_t* message,
+void PCDE::extractVA(const std::vector<uint8_t> message,
                      const int message_length,
                      float& voltage,
                      float& current)
@@ -64,8 +64,10 @@ void PCDE::extractVA(const uint8_t* message,
     // From Specification of PCDE voltage and current have 2 decimal places
     // With a point as decimal delimiter, 6 characters would be sufficient
     // for values up to 999.99 A/V
-    uint8_t* cur_msg;
-    uint8_t* vol_msg;
+    // uint8_t cur_msg[6];
+    // uint8_t vol_msg[6];
+    std::vector<uint8_t> cur_msg;
+    std::vector<uint8_t> vol_msg;
 
     int value_delimiter_index;
 
@@ -85,7 +87,8 @@ void PCDE::extractVA(const uint8_t* message,
             // This way of copying arrays is not the best, but it worked
             for (size_t k = 0; k < i; k++)
             {
-                cur_msg[k] = message[k];
+                // cur_msg[k] = message[k];
+                cur_msg.push_back(message[k]);
             }
 
             value_delimiter_index = i;
@@ -107,9 +110,9 @@ void PCDE::extractVA(const uint8_t* message,
             // Again a complicated way of copying, maybe there are better ways
             for (size_t k = vol_message_begin; k < i; k++)
             {
-                vol_msg[k - vol_message_begin] = message[k];
+                // vol_msg[k - vol_message_begin] = message[k];
+                vol_msg.push_back(message[k]);
             }
-
             voltageValid = true;
             break;
         }
@@ -177,12 +180,12 @@ void PCDE::getBatteryPercentage(int& percentage)
         return;
     }
 
-    percentage = ui8tof(battery_status_request.m_response_msg);
+    extractPercentage(battery_status_request.m_response_msg, battery_status_request.m_response_msg_length, percentage);
 }
 
-void PCDE::extractPercentage(const uint8_t* message, const int message_length, float& percentage)
+void PCDE::extractPercentage(const std::vector<uint8_t> message, const int message_length, int& percentage)
 {
-    uint8_t perc_msg[3];
+    std::vector<uint8_t> perc_msg;
 
     for (int i = 0; i < message_length; i++)
     {
@@ -192,7 +195,7 @@ void PCDE::extractPercentage(const uint8_t* message, const int message_length, f
 
             for (size_t k = 0; k < i; k++)
             {
-                perc_msg[k] = message[k];
+                perc_msg.push_back(message[k]);
             }
 
             break;
@@ -200,4 +203,5 @@ void PCDE::extractPercentage(const uint8_t* message, const int message_length, f
     }
 
     percentage = ui8tof(perc_msg);
+    printf("percentage: %i\n",percentage);
 }

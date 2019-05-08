@@ -12,6 +12,7 @@
 
 #include <string>
 #include <string.h>
+#include <vector>
 
 namespace pcde
 {
@@ -20,12 +21,13 @@ class CommandBase
 {
   public:
     CommandBase();
+    ~CommandBase();
 
     // Serial Msg to be sent
     std::string m_request_msg;
 
     // Received serial msg
-    uint8_t *m_response_msg;
+    std::vector<uint8_t> m_response_msg;
     // Actual length of serial response msg
     int m_response_msg_length;
     // Max Length of serial response msg
@@ -78,7 +80,9 @@ class Battery_Get_Status_Request : public CommandBase
 
 uint8_t* strtoui8t(std::string input);
 
-float ui8tof(uint8_t *input);
+float ui8tof(const uint8_t *input);
+float ui8tof(std::vector<uint8_t> input);
+float ui8toi(std::vector<uint8_t> input);
 
 } // namespace pcde
 #endif
