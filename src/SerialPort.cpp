@@ -93,7 +93,7 @@ bool SerialPort::isRunning()
     return m_isRunning;
 }
 
-int SerialPort::sendCommand(CommandBase command)
+int SerialPort::sendCommand(CommandBase& command)
 {
     uint8_t *request_msg = strtoui8t(command.m_request_msg);
 
@@ -110,17 +110,20 @@ int SerialPort::sendCommand(CommandBase command)
     // Send request, errors are handled by underlying code
     writePacket(request_msg, sizeof(request_msg) / sizeof(request_msg[0]) - 1);
 
-    // Read response, errors are handled by underlying
+    // Read response, errors are handled by underlying code
     command.m_response_msg_length=readPacket(response_msg, sizeof(response_msg));
 
-    command.m_response_msg = response_msg;
+    for(size_t i = 0; i < command.m_response_msg_length; i++)
+    {
+        command.m_response_msg[i]=response_msg[i];
+    }
 
     return 0;
 }
 
 int SerialPort::extractPacket(uint8_t const *buffer, size_t buffer_size) const
 {
-    if (buffer[buffer_size - 1] == '\n')
+    if (buffer[buffer_size - 1] == 0)
     {
         // Packet is complete when line break is sent
         return buffer_size;

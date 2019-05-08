@@ -43,7 +43,7 @@ void PCDE::setupSerial(const SerialConfig config)
 void PCDE::setupTestSerial(const SerialConfig config)
 {
     m_serialPort.closePort();
-    
+
     m_serialPort.setBaudrate(config.baudrate);
     m_serialPort.setWriteTimeout(config.write_timeout_ms);
     m_serialPort.setReadTimeout(config.read_timeout_ms);
@@ -71,6 +71,7 @@ void PCDE::extractVA(const uint8_t* message, const int message_length, float& vo
     int value_delimiter_index;
 
     bool currentValid=false;
+    bool voltageValid=false;
 
     for(int i=0; i<message_length; i++)
     {
@@ -82,7 +83,11 @@ void PCDE::extractVA(const uint8_t* message, const int message_length, float& vo
                 throw std::runtime_error("Invalid response to VA request!");
             }
             // Extract current value without unit char
-            std::copy(message, message+i-1, cur_msg);
+            for(size_t k = 0; k < i; k++)
+            {
+                cur_msg[k]=message[k];
+            }
+
             value_delimiter_index=i;
 
             currentValid=true;
@@ -105,14 +110,25 @@ void PCDE::extractVA(const uint8_t* message, const int message_length, float& vo
                 vol_message_begin=vol_message_begin+(length-6);
 
             // Extract voltage value without unit char
-            std::copy(message+vol_message_begin, message+i-1, vol_msg);
+            // std::copy(message+vol_message_begin, message+i-1, vol_msg);
+            for(size_t k=vol_message_begin;  k < i;  k++)
+            {
+                vol_msg[k]=message[k];
+            }
+
+            voltageValid=true;
             break;
         }
     }
 
     // Convert the messages to float
-    current=ui8tof(cur_msg);
-    voltage=ui8tof(vol_msg);
+    if (voltageValid&&currentValid) {
+        current=ui8tof(cur_msg);
+        voltage=ui8tof(vol_msg);
+    }else
+    {
+        throw std::runtime_error("No full VA response delivered.");
+    }
 }
 
 void PCDE::getMCSStatus(bool &status)
@@ -175,6 +191,11 @@ void PCDE::extractPercentage(const uint8_t* message, const int message_length, f
                 std::runtime_error("Invalid response to battery status request!");
 
             std::copy(message, message+i-1, perc_msg);
+            for(size_t k = 0; k < i; k++)
+            {
+                perc_msg[k]=message[k];
+            }
+
             break;
         }
     }

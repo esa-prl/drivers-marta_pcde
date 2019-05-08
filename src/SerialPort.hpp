@@ -93,7 +93,7 @@ namespace pcde{
              *
              * @param command Predefined command containing message
              */
-            int sendCommand(CommandBase command);
+            int sendCommand(CommandBase& command);
 
     };
 
