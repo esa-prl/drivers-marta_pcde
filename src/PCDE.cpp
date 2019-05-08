@@ -101,9 +101,6 @@ void PCDE::extractVA(const uint8_t* message,
             int vol_message_begin = value_delimiter_index + 2;
             int length = i - vol_message_begin;
 
-            // Minimum of leading digit, decimal point, 2 decimal digits and unit char
-            if (length < 5) throw std::runtime_error("Invalid response to VA request!");
-
             if (length > 6) vol_message_begin = vol_message_begin + (length - 6);
 
             // Extract voltage value without unit character
