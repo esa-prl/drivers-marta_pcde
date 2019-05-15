@@ -9,18 +9,14 @@
 
 #include "Command.hpp"
 
-#include <string>
 #include <iostream>
+#include <string>
 
 using namespace pcde;
 
-CommandBase::CommandBase()
-{
-}
+CommandBase::CommandBase() {}
 
-CommandBase::~CommandBase()
-{
-}
+CommandBase::~CommandBase() {}
 
 VA_Request::VA_Request(VA_Request::CHANNEL channel) : CommandBase()
 {
@@ -53,17 +49,17 @@ Battery_Get_Status_Request::Battery_Get_Status_Request() : CommandBase()
     m_max_response_msg_length = 6;
 }
 
-uint8_t *pcde::strtoui8t(std::string input)
+uint8_t* pcde::strtoui8t(std::string input)
 {
-    uint8_t *output;
+    uint8_t* output;
     output = new uint8_t[input.length() + 1];
     memcpy(output, input.c_str(), input.length() + 1);
     return output;
 }
 
-float pcde::ui8tof(const uint8_t *input)
+float pcde::ui8tof(const uint8_t* input)
 {
-    std::string s(input, input + sizeof(input) );
+    std::string s(input, input + sizeof(input));
     return std::stof(s);
 }
 

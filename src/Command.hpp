@@ -10,8 +10,8 @@
 #ifndef _COMMAND_HPP
 #define _COMMAND_HPP
 
-#include <string>
 #include <string.h>
+#include <string>
 #include <vector>
 
 namespace pcde
@@ -38,8 +38,8 @@ class VA_Request : public CommandBase
 {
   public:
     /**
-         * Voltage/Current channels of the PCDE
-         */
+     * Voltage/Current channels of the PCDE
+     */
     enum CHANNEL
     {
         INVALID,
@@ -56,7 +56,7 @@ class VA_Request : public CommandBase
     VA_Request(VA_Request::CHANNEL channel);
 
   private:
-    //VA channel this command is corresponding to
+    // VA channel this command is corresponding to
     VA_Request::CHANNEL m_channel;
 };
 
@@ -80,9 +80,9 @@ class Battery_Get_Status_Request : public CommandBase
 
 uint8_t* strtoui8t(std::string input);
 
-float ui8tof(const uint8_t *input);
+float ui8tof(const uint8_t* input);
 float ui8tof(std::vector<uint8_t> input);
 float ui8toi(std::vector<uint8_t> input);
 
-} // namespace pcde
+}  // namespace pcde
 #endif

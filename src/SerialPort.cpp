@@ -10,8 +10,7 @@
 #include "SerialPort.hpp"
 using namespace pcde;
 
-SerialPort::SerialPort(int max_packet_size)
-    : Driver(max_packet_size)
+SerialPort::SerialPort(int max_packet_size) : Driver(max_packet_size)
 {
     if (max_packet_size <= 0)
     {
@@ -21,7 +20,7 @@ SerialPort::SerialPort(int max_packet_size)
 
 SerialPort::~SerialPort()
 {
-    if(isRunning())
+    if (isRunning())
     {
         closePort();
     }
@@ -29,16 +28,16 @@ SerialPort::~SerialPort()
 
 void SerialPort::setBaudrate(const int baudrate)
 {
-    if(m_isRunning)
+    if (m_isRunning)
     {
         std::runtime_error("SerialPort: Can not set baudrate while port is open!");
     }
-    m_baudrate=baudrate;
+    m_baudrate = baudrate;
 }
 
 void SerialPort::setReadTimeout(const int timeout_ms)
 {
-    if(m_isRunning)
+    if (m_isRunning)
     {
         std::runtime_error("SerialPort: Can not set timeout while port is open!");
     }
@@ -51,7 +50,7 @@ void SerialPort::setReadTimeout(const int timeout_ms)
 
 void SerialPort::setWriteTimeout(const int timeout_ms)
 {
-    if(m_isRunning)
+    if (m_isRunning)
     {
         std::runtime_error("SerialPort: Can not set timeout while port is open!");
     }
@@ -64,38 +63,34 @@ void SerialPort::setWriteTimeout(const int timeout_ms)
 
 void SerialPort::openPort(std::string const& filename)
 {
-    if(m_isRunning)
+    if (m_isRunning)
     {
         std::runtime_error("SerialPort: Port is already open, first close it!");
     }
     Driver::openSerial(filename, m_baudrate);
-    m_isRunning=true;
+    m_isRunning = true;
 }
 
 void SerialPort::openTestPort()
 {
-    if(m_isRunning)
+    if (m_isRunning)
     {
         std::runtime_error("SerialPort: Port is already open, first close it!");
     }
     Driver::openURI("test://");
-    m_isRunning=true;
+    m_isRunning = true;
 }
 
 void SerialPort::closePort(void)
 {
-    if (isValid())
-        close();
+    if (isValid()) close();
 }
 
-bool SerialPort::isRunning()
-{
-    return m_isRunning;
-}
+bool SerialPort::isRunning() { return m_isRunning; }
 
 int SerialPort::sendCommand(CommandBase& command)
 {
-    uint8_t *request_msg = strtoui8t(command.m_request_msg);
+    uint8_t* request_msg = strtoui8t(command.m_request_msg);
 
     /** TODO:
      *  There should be a factory that manages all the possible commands and
@@ -111,9 +106,9 @@ int SerialPort::sendCommand(CommandBase& command)
     writePacket(request_msg, sizeof(request_msg) / sizeof(request_msg[0]) - 1);
 
     // Read response, errors are handled by underlying code
-    command.m_response_msg_length=readPacket(response_msg, sizeof(response_msg));
+    command.m_response_msg_length = readPacket(response_msg, sizeof(response_msg));
 
-    for(size_t i = 0; i < command.m_response_msg_length; i++)
+    for (size_t i = 0; i < command.m_response_msg_length; i++)
     {
         command.m_response_msg.push_back(response_msg[i]);
     }
@@ -121,14 +116,15 @@ int SerialPort::sendCommand(CommandBase& command)
     return 0;
 }
 
-int SerialPort::extractPacket(uint8_t const *buffer, size_t buffer_size) const
+int SerialPort::extractPacket(uint8_t const* buffer, size_t buffer_size) const
 {
     /**
      * This is a really bad hack. The messages received from PCDE
-     * are terminated by the hex value 0x00, but also the current and voltage values 
+     * are terminated by the hex value 0x00, but also the current and voltage values
      * are seperated by this value. To handle them as one packet, this hack with the unit character
      * was the easiest solution. There may be a lot better ones.
-     * Best would be to implement a unique end character for messages send by the PCDE microcontroller
+     * Best would be to implement a unique end character for messages send by the PCDE
+     * microcontroller
      */
     if (buffer[buffer_size - 1] == 0 && buffer[buffer_size - 2] != 'A')
     {

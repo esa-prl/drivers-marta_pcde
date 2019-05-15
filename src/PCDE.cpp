@@ -180,10 +180,14 @@ void PCDE::getBatteryPercentage(int& percentage)
         return;
     }
 
-    extractPercentage(battery_status_request.m_response_msg, battery_status_request.m_response_msg_length, percentage);
+    extractPercentage(battery_status_request.m_response_msg,
+                      battery_status_request.m_response_msg_length,
+                      percentage);
 }
 
-void PCDE::extractPercentage(const std::vector<uint8_t> message, const int message_length, int& percentage)
+void PCDE::extractPercentage(const std::vector<uint8_t> message,
+                             const int message_length,
+                             int& percentage)
 {
     std::vector<uint8_t> perc_msg;
 
@@ -203,5 +207,5 @@ void PCDE::extractPercentage(const std::vector<uint8_t> message, const int messa
     }
 
     percentage = ui8tof(perc_msg);
-    printf("percentage: %i\n",percentage);
+    printf("percentage: %i\n", percentage);
 }
